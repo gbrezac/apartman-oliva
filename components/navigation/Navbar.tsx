@@ -1,57 +1,72 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useScrollNav } from "@/components/navigation/useScrollNav";
-import { navTransition } from "@/lib/animations";
+import { LanguageSwitcher } from "@/components/navigation/LanguageSwitcher";
+import { MobileMenu } from "@/components/navigation/MobileMenu";
+import { MenuIcon } from "@/components/icons/Icon";
+import { NAV_LINKS } from "@/lib/navigation";
+
+const EASE_ELEGANT: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 /**
- * Navigacija se ne prikazuje na učitavanju stranice (opacity 0 + pointer-events
- * none dok se ne scrolla), zatim postaje sticky i transparentna, pa nakon
- * SOLID_THRESHOLD-a prelazi u bijelu pozadinu s tamnim tekstom.
- *
- * Linkovi su za sada placeholderi — stranica trenutno ima samo Hero sekciju
- * (dogovoreno), pa nema stvarnih #anchor meta na koje bi upućivali.
+ * Skriva se dok korisnik ne scrolla ~80px, zatim se pojavljuje VEĆ u
+ * finalnom stanju: bijela pozadina, suptilna sjena, blur, visina ~80px,
+ * sticky. Nema međukoraka kroz transparentnost (za razliku od Hero MVP
+ * verzije prije ovog sprinta).
  */
 export function Navbar() {
-  const { isVisible, isSolid } = useScrollNav();
+  const { isVisible } = useScrollNav();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <motion.header
-      className="fixed top-0 left-0 right-0 z-50"
-      initial={{ opacity: 0, y: -8 }}
-      animate={{
-        opacity: isVisible ? 1 : 0,
-        y: isVisible ? 0 : -8,
-        pointerEvents: isVisible ? "auto" : "none",
-      }}
-      transition={navTransition}
-    >
-      <motion.div
-        className="flex items-center justify-between px-6 py-5 md:px-12"
+    <>
+      <motion.header
+        className="fixed top-0 left-0 right-0 z-50 border-b border-ink/5 bg-background/90 shadow-[0_1px_0_rgba(43,43,43,0.06)] backdrop-blur-md"
+        initial={{ opacity: 0, y: -12 }}
         animate={{
-          backgroundColor: isSolid ? "#FAF9F6" : "rgba(255,255,255,0)",
-          boxShadow: isSolid ? "0 1px 0 rgba(43,43,43,0.06)" : "none",
+          opacity: isVisible ? 1 : 0,
+          y: isVisible ? 0 : -12,
+          pointerEvents: isVisible ? "auto" : "none",
         }}
-        transition={navTransition}
+        transition={{ duration: 0.5, ease: EASE_ELEGANT }}
       >
-        <span
-          className={`font-display text-lg tracking-wide transition-colors duration-300 ${
-            isSolid ? "text-ink" : "text-white"
-          }`}
-        >
-          Apartman Oliva
-        </span>
+        <div className="mx-auto flex h-20 max-w-[1280px] items-center justify-between px-6 md:px-12">
+          <span className="font-display text-lg tracking-wide text-ink">
+            Apartman Oliva
+          </span>
 
-        <nav
-          className={`hidden gap-10 font-body text-sm tracking-wide sm:flex transition-colors duration-300 ${
-            isSolid ? "text-ink/80" : "text-white/90"
-          }`}
-        >
-          <span>Apartman</span>
-          <span>Lokacija</span>
-          <span>Kontakt</span>
-        </nav>
-      </motion.div>
-    </motion.header>
+          {/* Desktop nav */}
+          <nav className="hidden items-center gap-8 font-body text-sm tracking-wide text-ink/80 lg:flex">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="transition-colors duration-300 hover:text-accent"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          <div className="hidden lg:block">
+            <LanguageSwitcher tone="light" />
+          </div>
+
+          {/* Mobile trigger */}
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Otvori izbornik"
+            className="text-ink transition-colors duration-300 hover:text-accent lg:hidden"
+          >
+            <MenuIcon size={24} />
+          </button>
+        </div>
+      </motion.header>
+
+      <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+    </>
   );
 }
